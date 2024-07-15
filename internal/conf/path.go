@@ -276,9 +276,9 @@ func (pconf *Path) validate(
 
 	// General
 
-	if pconf.Source != "publisher" && pconf.Source != "redirect" &&
+	if pconf.Source != "publisher" && pconf.Source != "redirect" && !pconf.HasStaticSource() &&
 		pconf.Regexp != nil && !pconf.SourceOnDemand {
-		return fmt.Errorf("a path with a regular expression (or path 'all') and a static source" +
+		return fmt.Errorf("a path with a regular expression (or path 'all')" +
 			" must have 'sourceOnDemand' set to true")
 	}
 	switch {
