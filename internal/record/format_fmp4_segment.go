@@ -54,7 +54,7 @@ func (s *formatFMP4Segment) close() error {
 	}
 
 	if s.fi != nil {
-		s.f.ai.Log(logger.Debug, "closing segment %s", s.path)
+		s.f.ai.Log(logger.Info, "closing segment %s", s.path)
 		err2 := s.fi.Close()
 		if err == nil {
 			err = err2
@@ -63,6 +63,10 @@ func (s *formatFMP4Segment) close() error {
 		if err2 == nil {
 			duration := s.lastDTS - s.startDTS
 			s.f.ai.agent.OnSegmentComplete(s.path, duration)
+
+			go s.f.ai.agent.Index.WriteIndex(s.f.ai.agent.PathName, s.path,
+				s.startNTP.Truncate(time.Microsecond),
+				s.startNTP.Add(duration).Truncate(time.Microsecond))
 		}
 	}
 
@@ -80,6 +84,10 @@ func (s *formatFMP4Segment) write(track *formatFMP4Track, sample *sample) error 
 		}
 		s.curPart.initialize()
 		s.f.nextSequenceNumber++
+
+		seek, _ := s.fi.Seek(0, io.SeekCurrent)
+		s.f.ai.agent.Index.Update(s.f.ai.agent.PathName,
+			sample.ntp.Truncate(time.Microsecond), seek)
 	} else if s.curPart.duration() >= s.f.ai.agent.PartDuration {
 		err := s.curPart.close()
 		s.curPart = nil
@@ -95,6 +103,10 @@ func (s *formatFMP4Segment) write(track *formatFMP4Track, sample *sample) error 
 		}
 		s.curPart.initialize()
 		s.f.nextSequenceNumber++
+
+		seek, _ := s.fi.Seek(0, io.SeekCurrent)
+		s.f.ai.agent.Index.Update(s.f.ai.agent.PathName,
+			sample.ntp.Truncate(time.Microsecond), seek)
 	}
 
 	return s.curPart.write(track, sample)

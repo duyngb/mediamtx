@@ -360,7 +360,7 @@ func segmentFMP4SeekAndMuxParts(
 	var maxMuxerDTS time.Duration
 	breakAtNextMdat := false
 
-	_, err := mp4.ReadBoxStructure(r, func(h *mp4.ReadHandle) (interface{}, error) {
+	err := ReadBoxStructure(r, func(h *mp4.ReadHandle) (interface{}, error) {
 		switch h.BoxInfo.Type.String() {
 		case "moof":
 			moofOffset = h.BoxInfo.Offset

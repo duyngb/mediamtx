@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
+	"github.com/bluenviron/mediamtx/internal/index"
 	"github.com/bluenviron/mediamtx/internal/logger"
 )
 
@@ -16,6 +17,7 @@ var timeNow = time.Now
 // CleanerEntry is a cleaner entry.
 type CleanerEntry struct {
 	Path        string
+	Name        string
 	Format      conf.RecordFormat
 	DeleteAfter time.Duration
 }
@@ -23,6 +25,7 @@ type CleanerEntry struct {
 // Cleaner removes expired recording segments from disk.
 type Cleaner struct {
 	Entries []CleanerEntry
+	Index   index.Index
 	Parent  logger.Writer
 
 	ctx       context.Context
@@ -97,9 +100,23 @@ func (c *Cleaner) doRunEntry(e *CleanerEntry) error {
 		if !info.IsDir() {
 			var pa Path
 			ok := pa.Decode(entryPath, fpath)
-			if ok {
+			ext := filepath.Ext(fpath)
+			if ok && pa.Path == e.Name {
 				if now.Sub(pa.Start) > e.DeleteAfter {
 					c.Log(logger.Debug, "removing %s", fpath)
+					os.Remove(fpath)
+
+					indexPath := fpath[:len(fpath)-len(ext)] + ".idx"
+					os.Remove(indexPath)
+
+					c.Index.PruneIndex(pa.Path, pa.Start.Truncate(time.Microsecond))
+				}
+			}
+
+			if ext == ".idx" {
+				segPath := PathAddExtension(fpath[:len(fpath)-4], e.Format)
+				_, err := os.Stat(segPath)
+				if os.IsNotExist(err) {
 					os.Remove(fpath)
 				}
 			}

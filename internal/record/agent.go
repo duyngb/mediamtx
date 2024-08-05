@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/bluenviron/mediamtx/internal/conf"
+	"github.com/bluenviron/mediamtx/internal/index"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
@@ -25,6 +26,7 @@ type Agent struct {
 	Stream            *stream.Stream
 	OnSegmentCreate   OnSegmentCreateFunc
 	OnSegmentComplete OnSegmentCompleteFunc
+	Index             index.Index
 	Parent            logger.Writer
 
 	restartPause time.Duration

@@ -51,6 +51,7 @@ func gatherCleanerEntries(paths map[string]*conf.Path) []record.CleanerEntry {
 		if pa.Record && pa.RecordDeleteAfter != 0 {
 			entry := record.CleanerEntry{
 				Path:        pa.RecordPath,
+				Name:        pa.Name,
 				Format:      pa.RecordFormat,
 				DeleteAfter: time.Duration(pa.RecordDeleteAfter),
 			}
@@ -188,6 +189,10 @@ func (p *Core) Log(level logger.Level, format string, args ...interface{}) {
 func (p *Core) run() {
 	defer close(p.done)
 
+	oldLog := playback.L
+	playback.L = p
+	defer func() { playback.L = oldLog }()
+
 	confChanged := func() chan struct{} {
 		if p.confWatcher != nil {
 			return p.confWatcher.Watch()
@@ -254,6 +259,7 @@ func (p *Core) createResources(initial bool) error {
 	}
 
 	if initial {
+		p.Log(logger.Info, "---------8<---------")
 		p.Log(logger.Info, "MediaMTX %s", version)
 
 		if p.confPath != "" {
@@ -337,6 +343,7 @@ func (p *Core) createResources(initial bool) error {
 		p.recordCleaner == nil {
 		p.recordCleaner = &record.Cleaner{
 			Entries: cleanerEntries,
+			Index:   playback.Index,
 			Parent:  p,
 		}
 		p.recordCleaner.Initialize()
@@ -644,6 +651,7 @@ func (p *Core) createResources(initial bool) error {
 			HLSServer:      p.hlsServer,
 			WebRTCServer:   p.webRTCServer,
 			SRTServer:      p.srtServer,
+			Index:          playback.Index,
 			Parent:         p,
 		}
 		err = i.Initialize()

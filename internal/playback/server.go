@@ -49,6 +49,9 @@ func (s *Server) Initialize() error {
 
 	group.GET("/list", s.onList)
 	group.GET("/get", s.onGet)
+	group.HEAD("/get", s.onHead)
+	group.POST("/reindex", s.onReIndex)
+	group.GET("/index", Index.OnDumpIndex)
 
 	network, address := restrictnetwork.Restrict("tcp", s.Address)
 
@@ -69,6 +72,7 @@ func (s *Server) Initialize() error {
 
 	s.Log(logger.Info, "listener opened on "+address)
 
+	go Index.IndexAll(s.PathConfs)
 	return nil
 }
 
@@ -92,7 +96,7 @@ func (s *Server) ReloadPathConfs(pathConfs map[string]*conf.Path) {
 
 func (s *Server) writeError(ctx *gin.Context, status int, err error) {
 	// show error in logs
-	s.Log(logger.Error, err.Error())
+	s.Log(logger.Debug, err.Error())
 
 	// add error to response
 	ctx.String(status, err.Error())

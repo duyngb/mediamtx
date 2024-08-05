@@ -44,7 +44,9 @@ type PPROF struct {
 func (pp *PPROF) Initialize() error {
 	router := gin.New()
 	router.SetTrustedProxies(pp.TrustedProxies.ToTrustedProxies()) //nolint:errcheck
-	router.NoRoute(pp.onRequest)
+	gr := router.Group("/debug/pprof")
+	gr.GET("/", pp.onRequest)
+	gr.Any("/:method", pp.onRequest)
 
 	network, address := restrictnetwork.Restrict("tcp", pp.Address)
 

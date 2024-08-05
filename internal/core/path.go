@@ -17,6 +17,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/externalcmd"
 	"github.com/bluenviron/mediamtx/internal/hooks"
 	"github.com/bluenviron/mediamtx/internal/logger"
+	"github.com/bluenviron/mediamtx/internal/playback"
 	"github.com/bluenviron/mediamtx/internal/record"
 	"github.com/bluenviron/mediamtx/internal/stream"
 )
@@ -815,6 +816,7 @@ func (pa *path) startRecording() {
 			}
 		},
 		Parent: pa,
+		Index:  playback.Index,
 	}
 	pa.recordAgent.Initialize()
 }

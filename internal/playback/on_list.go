@@ -100,6 +100,8 @@ func (p *Server) onList(ctx *gin.Context) {
 	if err != nil {
 		if errors.Is(err, errNoSegmentsFound) {
 			p.writeError(ctx, http.StatusNotFound, err)
+		} else if os.IsNotExist(err) {
+			p.writeError(ctx, http.StatusNotFound, errNoSegmentsFound)
 		} else {
 			p.writeError(ctx, http.StatusBadRequest, err)
 		}

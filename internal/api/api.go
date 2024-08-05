@@ -20,6 +20,7 @@ import (
 	"github.com/bluenviron/mediamtx/internal/auth"
 	"github.com/bluenviron/mediamtx/internal/conf"
 	"github.com/bluenviron/mediamtx/internal/defs"
+	"github.com/bluenviron/mediamtx/internal/index"
 	"github.com/bluenviron/mediamtx/internal/logger"
 	"github.com/bluenviron/mediamtx/internal/protocols/httpp"
 	"github.com/bluenviron/mediamtx/internal/record"
@@ -126,6 +127,7 @@ type API struct {
 	HLSServer      HLSServer
 	WebRTCServer   WebRTCServer
 	SRTServer      SRTServer
+	Index          index.Index
 	Parent         apiParent
 
 	httpServer *httpp.WrappedServer
@@ -437,6 +439,11 @@ func (a *API) onConfigPathsAdd(ctx *gin.Context) { //nolint:dupl
 
 	a.Conf = newConf
 	a.Parent.APIConfigSet(newConf)
+
+	go func() {
+		pathConf := a.Conf.Paths[confName]
+		a.Index.IndexPath(pathConf, confName)
+	}()
 
 	ctx.Status(http.StatusOK)
 }
